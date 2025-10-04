@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HusbandLabs — experiments, apps, & oddities</title>
+  <meta name="description" content="HusbandLabs is a small portfolio of experiments, games, and apps by Nate.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='50' x='8' font-size='48'%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
+  <style>
+    :root{
+      --bg: #0b0c10;
+      --card: #111217;
+      --ink: #e8e8ea;
+      --muted:#a6a7ab;
+      --accent:#6cf0c2;
+      --accent-2:#9cc9ff;
+      --radius: 16px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --grid-gap: clamp(16px, 2.2vw, 28px);
+    }
+    @media (prefers-color-scheme: light){
+      :root{ --bg:#fafbfc; --card:#ffffff; --ink:#111217; --muted:#5b5e66; --shadow:0 10px 30px rgba(0,0,0,.08); }
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      font: 16px/1.5 ui-sans-serif, -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--ink);
+      background: radial-gradient(1200px 600px at 10% -10%, rgba(108,240,194,.15), transparent 40%),
+                  radial-gradient(900px 500px at 110% 10%, rgba(156,201,255,.12), transparent 45%),
+                  var(--bg);
+    }
+    a { color: inherit; text-decoration: none; }
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: clamp(20px, 4vw, 48px);
+    }
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+      padding: 8px 0 24px 0;
+    }
+    .brand{
+      display:flex; align-items:center; gap:14px; font-weight:700; letter-spacing:.2px;
+    }
+    .logo{
+      width:44px; height:44px; border-radius:12px; background:
+        conic-gradient(from 210deg, var(--accent), var(--accent-2), var(--accent));
+      box-shadow: var(--shadow);
+      display:grid; place-items:center; color:#0b0c10; font-weight:900;
+    }
+    .tag{
+      color:var(--muted); font-weight:500; font-size:0.95rem;
+    }
+    .hero{
+      margin: 8px 0 28px;
+    }
+    .hero h1{
+      margin:0 0 8px 0;
+      font-size: clamp(28px, 3.2vw, 40px);
+      letter-spacing: -.3px;
+    }
+    .hero p{ margin:0; color:var(--muted); max-width: 70ch; }
+
+    .section{
+      margin-top: 28px;
+    }
+    .section h2{
+      margin:0 0 14px 4px; font-size: 0.95rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
+    }
+    .grid{
+      display:grid; gap: var(--grid-gap);
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+    .card{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      display:flex; flex-direction:column; gap:10px;
+      position:relative;
+      outline: 1px solid rgba(255,255,255,.04);
+      transition: transform .2s ease, outline-color .2s ease;
+    }
+    .card:hover{ transform: translateY(-3px); outline-color: rgba(108,240,194,.25); }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      font-size: 12px; padding: 6px 10px; border-radius: 999px;
+      background: rgba(108,240,194,.12); color: var(--accent);
+      width: fit-content;
+    }
+    .title{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .title h3{ margin:0; font-size:1.05rem; }
+    .desc{ color:var(--muted); font-size:.95rem; }
+    .go{
+      margin-top:auto; display:inline-flex; align-items:center; gap:10px;
+      font-weight:600; color:var(--accent);
+    }
+    .go span{ transition: transform .2s ease; display:inline-block; }
+    .card:hover .go span{ transform: translateX(3px); }
+
+    footer{
+      margin: 42px 0 6px;
+      color:var(--muted); font-size:.9rem; display:flex; justify-content:space-between; gap:10px;
+    }
+    .links{ display:flex; gap:16px; flex-wrap:wrap; }
+    .links a{ opacity:.85; }
+    .links a:hover{ opacity:1; text-decoration:underline; text-underline-offset:3px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">H</div>
+        <div>
+          <div style="font-size:1.15rem;">HusbandLabs</div>
+          <div class="tag">silly things I made my wife</div>
+        </div>
+      </div>
+      <nav class="links">
+       <!--  <a href="#current">Current</a>
+        <a href="#soon">Coming Soon</a> -->
+      </nav>
+    </header>
+
+    <section class="hero">
+      <h1>Small, strange, and fun internet things.</h1>
+      <p>A tiny portfolio of projects—some shipped, some brewing. Built fast, kept simple.</p>
+    </section>
+
+    <section id="current" class="section">
+      <h2>Current</h2>
+      <div class="grid">
+        <a class="card" href="https://hamsterhopper.com" target="_blank" rel="noopener">
+          <div class="pill">Live</div>
+          <div class="title"><h3>Hamsterhopper.com</h3></div>
+          <p class="desc">Arcade-style web game. Hop, dodge, repeat. Built to feel like a Saturday-morning snack.</p>
+          <div class="go">Visit <span>→</span></div>
+        </a>
+
+        <a class="card" href="https://picfit.ai" target="_blank" rel="noopener">
+          <div class="pill">Live</div>
+          <div class="title"><h3>PicFit.ai</h3></div>
+          <p class="desc">Try-on concepts & fit visualizations. Lightweight experiments in AI + consumer UX.</p>
+          <div class="go">Visit <span>→</span></div>
+        </a>
+      </div>
+    </section>
+
+    <section id="soon" class="section">
+      <h2>Coming Soon</h2>
+      <div class="grid">
+        <div class="card">
+          <div class="pill">Building</div>
+          <div class="title"><h3>Poke</h3></div>
+          <p class="desc">The simplest social nudge: one tap, one poke. iOS toy app with iMessage extension.</p>
+          <div class="go">Details soon <span>→</span></div>
+        </div>
+
+        <div class="card">
+          <div class="pill">Prototype</div>
+          <div class="title"><h3>Drone Hunter</h3></div>
+          <p class="desc">Arcade prototype about airspace, stealth, and satisfying “lock-on” moments.</p>
+          <div class="go">Follow along <span>→</span></div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div>© <span id="y"></span> HusbandLabs</div>
+      <div class="links">
+        <a href="#https://x.com/natemcguire">Twitter/X</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // set year
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
