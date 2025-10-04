@@ -23,6 +23,9 @@
   <meta name="twitter:description" content="Small, strange, and fun internet things. A tiny portfolio of projects—some shipped, some brewing. Built fast, kept simple.">
   <meta name="twitter:image" content="https://husbandlabs.com/og-image.png">
   <meta name="twitter:creator" content="@natemcguire">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg: #0b0c10;
@@ -60,12 +63,14 @@
     }
     .brand{
       display:flex; align-items:center; gap:14px; font-weight:700; letter-spacing:.2px;
+      font-family: 'Press Start 2P', monospace;
     }
     .logo{
       width:44px; height:44px; border-radius:12px; background:
         conic-gradient(from 210deg, var(--accent), var(--accent-2), var(--accent));
       box-shadow: var(--shadow);
       display:grid; place-items:center; color:#0b0c10; font-weight:900;
+      font-family: 'Press Start 2P', monospace;
     }
     .tag{
       color:var(--muted); font-weight:500; font-size:0.95rem;
@@ -73,12 +78,25 @@
     .hero{
       margin: 8px 0 28px;
     }
+    .hero-img{
+      width: 100%;
+      max-width: 600px;
+      height: auto;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+    }
     .hero h1{
       margin:0 0 8px 0;
-      font-size: clamp(28px, 3.2vw, 40px);
-      letter-spacing: -.3px;
+      font-size: clamp(20px, 2.5vw, 28px);
+      letter-spacing: 2px;
+      font-family: 'Press Start 2P', monospace;
+      line-height: 1.6;
     }
-    .hero p{ margin:0; color:var(--muted); max-width: 70ch; }
+    .hero p{ margin:0; color:var(--muted); max-width: 70ch; font-family: 'Press Start 2P', monospace; font-size: 0.75rem; line-height: 1.8; font-weight: 400; }
 
     .section{
       margin-top: 28px;
@@ -110,8 +128,8 @@
     .title{
       display:flex; align-items:center; justify-content:space-between; gap:10px;
     }
-    .title h3{ margin:0; font-size:1.05rem; }
-    .desc{ color:var(--muted); font-size:.95rem; }
+    .title h3{ margin:0; font-size:0.9rem; font-family: 'Press Start 2P', monospace; font-weight: 400; }
+    .desc{ color:var(--muted); font-size:0.65rem; font-family: 'Press Start 2P', monospace; line-height: 1.8; font-weight: 400; }
     .go{
       margin-top:auto; display:inline-flex; align-items:center; gap:10px;
       font-weight:600; color:var(--accent);
@@ -145,6 +163,7 @@
     </header>
 
     <section class="hero">
+      <img src="og-image.png" alt="HusbandLabs" class="hero-img">
       <h1>Small, strange, and fun internet things.</h1>
       <p>A tiny portfolio of projects—some shipped, some brewing. Built fast, kept simple.</p>
     </section>
