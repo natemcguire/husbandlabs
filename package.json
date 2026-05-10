@@ -1,0 +1,13 @@
+{
+  "name": "husbandlabs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HusbandLabs — static landing page deployed to Cloudflare Pages",
+  "scripts": {
+    "dev": "wrangler pages dev public",
+    "deploy": "wrangler pages deploy public --project-name husbandlabs --branch main"
+  },
+  "devDependencies": {
+    "wrangler": "^4.61.1"
+  }
+}
