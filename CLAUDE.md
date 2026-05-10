@@ -27,7 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Tech Stack
 
 - **Static HTML/CSS/JS** — no framework, no build step
-- **Hosting**: Cloudflare Pages, project `husbandlabs`, production branch `main`
+- **Hosting**: Cloudflare Pages, project `husbandlabs`, production branch `master`
 - **Custom domains**: `husbandlabs.com` and `www.husbandlabs.com` (CNAMEs → `husbandlabs.pages.dev`, proxied)
 - **Account**: Nate.mcguire@gmail.com (`4219a576830c72b0e6e4ca358e61473a`)
 - **Zone**: `571db2dcc16cd5f73eb6f31cb35c21be` (husbandlabs.com)
@@ -44,7 +44,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm install
 npm run dev      # local preview via wrangler pages dev public
-npm run deploy   # wrangler pages deploy public --project-name husbandlabs --branch main
+npm run deploy   # wrangler pages deploy public --project-name husbandlabs --branch master
 ```
 
 Auth comes from `CLOUDFLARE_API_TOKEN` exported by `~/.zshrc` from `~/.config/keys/keys.env` (the `nate-bot` token, scope: Pages/Workers/D1/KV/R2 Edit + Zone DNS Edit + Zone Read + SSL Edit + User/Memberships Read).

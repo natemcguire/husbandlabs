@@ -5,7 +5,7 @@
   "description": "HusbandLabs — static landing page deployed to Cloudflare Pages",
   "scripts": {
     "dev": "wrangler pages dev public",
-    "deploy": "wrangler pages deploy public --project-name husbandlabs --branch main"
+    "deploy": "wrangler pages deploy public --project-name husbandlabs --branch master"
   },
   "devDependencies": {
     "wrangler": "^4.61.1"
