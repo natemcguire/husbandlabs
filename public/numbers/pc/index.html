@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>PureCalculators — calc status dashboard</title>
+<style>
+  :root { color-scheme: light dark; --fg:#1a1a1a; --bg:#fafafa; --muted:#666; --br:#e0e0e0; --hover:#f0f0f0; --accent:#7c3aed; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e0e0e0; --bg:#1a1a1a; --muted:#999; --br:#333; --hover:#2a2a2a; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:var(--bg); color:var(--fg); font:14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  header { padding:16px 24px; border-bottom:1px solid var(--br); display:flex; align-items:baseline; gap:16px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:18px; font-weight:600; }
+  header .meta { color:var(--muted); font-size:12px; }
+  .controls { padding:12px 24px; border-bottom:1px solid var(--br); display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .controls input, .controls select { padding:6px 10px; font:inherit; background:var(--bg); color:var(--fg); border:1px solid var(--br); border-radius:6px; }
+  .controls input { min-width:240px; }
+  .stats { padding:0 24px 12px; display:flex; gap:24px; flex-wrap:wrap; }
+  .stat { font-size:13px; color:var(--muted); }
+  .stat b { color:var(--fg); font-weight:600; font-size:15px; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { padding:8px 12px; text-align:left; border-bottom:1px solid var(--br); }
+  th { font-weight:600; font-size:12px; text-transform:uppercase; color:var(--muted); cursor:pointer; user-select:none; position:sticky; top:0; background:var(--bg); z-index:1; }
+  th:hover { background:var(--hover); }
+  tbody tr:hover { background:var(--hover); }
+  td.slug { font-family: ui-monospace, monospace; font-size:13px; }
+  td.slug a { color:var(--accent); text-decoration:none; }
+  td.slug a:hover { text-decoration:underline; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:500; white-space:nowrap; }
+  .b-repo { background:#22c55e22; color:#16a34a; }
+  .b-plan { background:#eab30822; color:#ca8a04; }
+  .b-noslug { background:#94a3b822; color:#64748b; }
+  .b-status-completed { background:#22c55e22; color:#16a34a; }
+  .b-status-rfi { background:#3b82f622; color:#2563eb; }
+  .b-status-ip { background:#f9731622; color:#ea580c; }
+  .b-status-rfw { background:#94a3b822; color:#64748b; }
+  .flags { display:flex; gap:4px; }
+  .flag { font-size:10px; padding:1px 5px; border-radius:6px; background:var(--hover); color:var(--muted); }
+  .flag.on { background:var(--accent); color:white; }
+  .empty { padding:48px 24px; text-align:center; color:var(--muted); }
+  footer { padding:16px 24px; font-size:12px; color:var(--muted); border-top:1px solid var(--br); }
+</style>
+</head>
+<body>
+<header>
+  <h1>PureCalculators · calc status</h1>
+  <span class="meta" id="meta">loading…</span>
+</header>
+
+<!-- ────────── pipeline status panel + per-calc checklist ────────── -->
+<section id="status-panel" style="padding:12px 24px; border-bottom:1px solid var(--br); display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:10px 18px;">
+  <div class="stat-box"><div class="stat-label">Total calcs</div><div class="stat-value" id="sp-totalCalcs">—</div></div>
+  <div class="stat-box"><div class="stat-label">New (markdown)</div><div class="stat-value" id="sp-newCalcs">—</div></div>
+  <div class="stat-box"><div class="stat-label">Legacy</div><div class="stat-value" id="sp-legacyCalcs">—</div></div>
+  <div class="stat-box"><div class="stat-label">Locales</div><div class="stat-value" id="sp-locales">—</div></div>
+  <div class="stat-box"><div class="stat-label">Test cases</div><div class="stat-value" id="sp-testCases">—</div></div>
+  <div class="stat-box"><div class="stat-label">Calcs w/ tests</div><div class="stat-value" id="sp-testedCalcs">—</div></div>
+  <div class="stat-box"><div class="stat-label">Translations cache</div><div class="stat-value" id="sp-translateCache">—</div></div>
+  <div class="stat-box"><div class="stat-label">Last deploy</div><div class="stat-value" id="sp-lastDeploy">—</div></div>
+  <div class="stat-box" style="grid-column:1/-1"><div class="stat-label">Status generated</div><div class="stat-value" id="sp-generated">—</div></div>
+</section>
+
+<section id="earners-section" style="padding:12px 24px; border-bottom:1px solid var(--br);">
+  <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <h2 style="margin:0; font-size:15px; font-weight:600;">Top earners</h2>
+    <span id="earners-meta" style="font-size:12px; color:var(--muted);"></span>
+  </div>
+  <table id="earners-table" style="width:100%; margin-top:8px; border-collapse:collapse; font-size:13px;">
+    <thead><tr>
+      <th style="text-align:left; padding:4px 8px; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;">#</th>
+      <th style="text-align:left; padding:4px 8px; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;">slug</th>
+      <th style="text-align:right; padding:4px 8px; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;">pageviews</th>
+      <th style="text-align:right; padding:4px 8px; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;">revenue</th>
+      <th style="text-align:right; padding:4px 8px; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;">RPM</th>
+      <th style="text-align:left; padding:4px 8px; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;">in pipeline</th>
+    </tr></thead>
+    <tbody id="earners-rows"></tbody>
+  </table>
+  <div id="earners-empty" hidden style="padding:12px 0; color:var(--muted); font-size:12px;">
+    No data yet. Export an Ezoic / GSC / GA4 top-pages CSV and run:
+    <code style="background:var(--hover); padding:2px 4px; border-radius:4px;">node tools/import-top-earners.mjs &lt;export.csv&gt;</code>
+  </div>
+</section>
+
+<details id="checklist-section" style="border-bottom:1px solid var(--br); padding:12px 24px;">
+  <summary style="cursor:pointer; font-weight:600; padding:6px 0;">Spot-check checklist — click any link to open the page</summary>
+  <input id="checklist-q" placeholder="filter slug / name / category…" style="margin:8px 0; padding:6px 10px; min-width:280px; border:1px solid var(--br); border-radius:6px; background:var(--bg); color:var(--fg);">
+  <div id="checklist" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:6px; font-size:13px;"></div>
+</details>
+
+<style>
+  :root {
+    --ok-bg:   #22c55e22; --ok-fg:   #15803d;
+    --warn-bg: #eab30822; --warn-fg: #a16207;
+    --bad-bg:  #ef444422; --bad-fg:  #b91c1c;
+    --info-bg: #3b82f622; --info-fg: #1d4ed8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ok-fg:   #4ade80;
+      --warn-fg: #facc15;
+      --bad-fg:  #f87171;
+      --info-fg: #60a5fa;
+    }
+  }
+  .stat-box { padding:6px 10px; border-radius:6px; background:var(--hover); border-left:3px solid transparent; }
+  .stat-box.s-ok   { background:var(--ok-bg);   border-left-color:var(--ok-fg); }
+  .stat-box.s-warn { background:var(--warn-bg); border-left-color:var(--warn-fg); }
+  .stat-box.s-bad  { background:var(--bad-bg);  border-left-color:var(--bad-fg); }
+  .stat-box.s-info { background:var(--info-bg); border-left-color:var(--info-fg); }
+  .stat-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .stat-value { font-size:18px; font-weight:600; margin-top:2px; }
+  .stat-box.s-ok   .stat-value { color:var(--ok-fg); }
+  .stat-box.s-warn .stat-value { color:var(--warn-fg); }
+  .stat-box.s-bad  .stat-value { color:var(--bad-fg); }
+  .stat-box.s-info .stat-value { color:var(--info-fg); }
+
+  .ck-row { padding:6px 10px; border:1px solid var(--br); border-radius:6px; display:flex; flex-direction:column; gap:2px; border-left:3px solid var(--br); }
+  .ck-row.s-ok   { border-left-color:var(--ok-fg); }
+  .ck-row.s-warn { border-left-color:var(--warn-fg); }
+  .ck-row.s-bad  { border-left-color:var(--bad-fg); }
+  .ck-row a { color:var(--accent); text-decoration:none; font-family:ui-monospace, monospace; font-size:12.5px; }
+  .ck-row a:hover { text-decoration:underline; }
+  .ck-meta { font-size:11px; color:var(--muted); display:flex; gap:8px; }
+  .ck-meta .pill { padding:1px 6px; border-radius:8px; background:var(--bg); }
+  .pill.p-ok   { background:var(--ok-bg);   color:var(--ok-fg); }
+  .pill.p-warn { background:var(--warn-bg); color:var(--warn-fg); }
+  .pill.p-bad  { background:var(--bad-bg);  color:var(--bad-fg); }
+  .ck-locales a { font-size:11px; padding:1px 5px; border-radius:4px; background:var(--bg); margin-right:3px; }
+</style>
+
+<div class="controls">
+  <input id="q" placeholder="search slug / name / category…" autofocus>
+  <select id="filter-status"><option value="">all statuses</option></select>
+  <select id="filter-category"><option value="">all categories</option></select>
+  <select id="filter-repo">
+    <option value="">all</option>
+    <option value="1">in repo only</option>
+    <option value="0">planned only (not in repo)</option>
+  </select>
+  <select id="filter-type"><option value="">all types</option></select>
+  <button id="reset">reset</button>
+</div>
+<div class="stats" id="stats"></div>
+<div id="table-wrap" style="overflow:auto;">
+  <table>
+    <thead>
+      <tr>
+        <th data-sort="slug">slug</th>
+        <th data-sort="name">name</th>
+        <th data-sort="type">type</th>
+        <th data-sort="category">category</th>
+        <th data-sort="status">status</th>
+        <th data-sort="writer">writer</th>
+        <th>flags</th>
+        <th data-sort="last_edited_time">last edit</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+<div class="empty" id="empty" hidden>no rows</div>
+<footer id="footer"></footer>
+
+<script type="module">
+import initSqlJs from 'https://esm.sh/sql.js@1.10.3?dev'
+
+const $ = sel => document.querySelector(sel)
+const $$ = sel => [...document.querySelectorAll(sel)]
+
+// ── status panel + checklist (parallel to the sqlite-backed Notion table) ──
+function classFor(value, { ok, warn } = {}) {
+  if (value >= ok) return 's-ok'
+  if (value >= warn) return 's-warn'
+  return 's-bad'
+}
+function setStat(id, value, statusClass) {
+  const v = $('#' + id)
+  v.textContent = value
+  const box = v.closest('.stat-box')
+  box.classList.remove('s-ok', 's-warn', 's-bad', 's-info')
+  if (statusClass) box.classList.add(statusClass)
+}
+function ageHours(iso) {
+  if (!iso) return Infinity
+  return (Date.now() - new Date(iso).getTime()) / 36e5
+}
+function ageColor(hours) {
+  if (hours < 24) return 's-ok'
+  if (hours < 24 * 7) return 's-warn'
+  return 's-bad'
+}
+
+fetch('/numbers/pcdata/status.json').then(r => r.json()).then(s => {
+  setStat('sp-totalCalcs',  s.site.totalUniqueCalcs, 's-info')
+  setStat('sp-newCalcs',    s.site.newPipelineCalcs, 's-info')
+  setStat('sp-legacyCalcs', s.site.legacyCalcs,      's-info')
+  setStat('sp-locales',     s.locales.total,         's-info')
+  setStat('sp-testCases',   s.tests.totalCases,
+    classFor(s.tests.totalCases, { ok: 200, warn: 50 }))
+
+  const coverPct = s.site.newPipelineCalcs ? s.tests.uniqueCalcsCovered / s.site.newPipelineCalcs : 0
+  setStat('sp-testedCalcs', `${s.tests.uniqueCalcsCovered} / ${s.site.newPipelineCalcs}  (${(coverPct * 100).toFixed(0)}%)`,
+    coverPct >= 0.9 ? 's-ok' : coverPct >= 0.5 ? 's-warn' : 's-bad')
+
+  setStat('sp-translateCache',
+    s.cacheSize.translate ? (s.cacheSize.translate / 1024 / 1024).toFixed(1) + ' MB' : '—',
+    s.cacheSize.translate > 1024 * 1024 ? 's-ok' : 's-warn')
+
+  const deployHours = ageHours(s.deploys.distMtime)
+  setStat('sp-lastDeploy',
+    s.deploys.distMtime ? new Date(s.deploys.distMtime).toLocaleString() : '—',
+    ageColor(deployHours))
+
+  setStat('sp-generated', new Date(s.generated).toLocaleString(), ageColor(ageHours(s.generated)))
+}).catch(() => { $('#sp-generated').textContent = 'status.json not found — run `node tools/build-dashboard-status.mjs`' })
+
+fetch('/numbers/pcdata/top-earners.json').then(r => r.json()).then(data => {
+  const tbody = document.getElementById('earners-rows')
+  const meta = document.getElementById('earners-meta')
+  const empty = document.getElementById('earners-empty')
+  meta.textContent = `${data.period || ''} · source: ${data.source || 'placeholder'} · ${data.updated ? 'updated ' + new Date(data.updated).toLocaleDateString() : 'no real data yet'}`
+
+  // Cross-reference with checklist to flag legacy vs new-pipeline calcs
+  fetch('/numbers/pcdata/checklist.json').then(r => r.json()).then(chk => {
+    const newSlugs = new Set(chk.map(c => c.slug))
+    const allRowsHaveData = data.rows.some(r => r.revenue != null || r.pageviews != null)
+    if (!allRowsHaveData) { empty.hidden = false }
+    tbody.innerHTML = data.rows.map(r => {
+      const pv = r.pageviews != null ? r.pageviews.toLocaleString() : '—'
+      const rev = r.revenue != null ? '$' + r.revenue.toFixed(2) : '—'
+      const rpm = r.rpm != null ? '$' + r.rpm.toFixed(2) : (r.pageviews && r.revenue ? '$' + (r.revenue / r.pageviews * 1000).toFixed(2) : '—')
+      const inPipeline = newSlugs.has(r.slug)
+      const pipPill = inPipeline ? '<span class="pill p-ok">new</span>' : '<span class="pill" style="background:var(--hover); color:var(--muted);">legacy</span>'
+      // RPM color: > $5 = green, > $2 = yellow, else neutral
+      const rpmClass = r.rpm > 5 ? 'p-ok' : r.rpm > 2 ? 'p-warn' : ''
+      return `<tr>
+        <td style="padding:4px 8px;">${r.rank}</td>
+        <td style="padding:4px 8px; font-family:ui-monospace, monospace;"><a href="https://purecalculators.com/${r.slug}/" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:none;">${r.slug}</a></td>
+        <td style="padding:4px 8px; text-align:right;">${pv}</td>
+        <td style="padding:4px 8px; text-align:right;">${rev}</td>
+        <td style="padding:4px 8px; text-align:right;"><span class="pill ${rpmClass}">${rpm}</span></td>
+        <td style="padding:4px 8px;">${pipPill}</td>
+      </tr>`
+    }).join('')
+  })
+}).catch(() => { document.getElementById('earners-empty').hidden = false })
+
+fetch('/numbers/pcdata/checklist.json').then(r => r.json()).then(list => {
+  const el = $('#checklist')
+  const q = $('#checklist-q')
+  function render(filter = '') {
+    const needle = filter.trim().toLowerCase()
+    const filtered = needle
+      ? list.filter(c => `${c.slug} ${c.name} ${c.category}`.toLowerCase().includes(needle))
+      : list
+    el.innerHTML = filtered.map(c => {
+      const rowClass = c.tests > 0 ? 's-ok' : 's-bad'
+      const testPill = c.tests > 0 ? 'p-ok' : 'p-bad'
+      const locPill = c.locales >= 38 ? 'p-ok' : c.locales > 1 ? 'p-warn' : 'p-bad'
+      return `
+      <div class="ck-row ${rowClass}">
+        <a href="${c.url}" target="_blank" rel="noopener">${c.slug}</a>
+        <div class="ck-meta">
+          <span class="pill">${c.category}</span>
+          <span class="pill ${locPill}">${c.locales} loc</span>
+          <span class="pill ${testPill}" title="number of golden tests">${c.tests} test${c.tests === 1 ? '' : 's'}</span>
+        </div>
+        <div class="ck-locales">${c.sampleLocales.map(l => `<a href="${l.url}" target="_blank" rel="noopener">${l.locale}</a>`).join('')}</div>
+      </div>`
+    }).join('')
+  }
+  render()
+  q.addEventListener('input', () => render(q.value))
+}).catch(() => { $('#checklist').textContent = 'checklist.json not found' })
+
+const meta = $('#meta')
+meta.textContent = 'loading sqlite…'
+
+const [SQL, dbBytes] = await Promise.all([
+  initSqlJs({ locateFile: f => `https://esm.sh/sql.js@1.10.3/dist/${f}` }),
+  fetch('/data/calcs.sqlite').then(r => {
+    if (!r.ok) throw new Error('failed to fetch calcs.sqlite')
+    return r.arrayBuffer()
+  })
+])
+const db = new SQL.Database(new Uint8Array(dbBytes))
+
+// Pull all rows
+const stmt = db.prepare(`
+  SELECT notion_id, slug, name, type, category, status, writer, developer,
+         initialized, ready_component, ready_article, outsourced_component,
+         published, in_repo, notion_url, last_edited_time
+  FROM calcs
+  ORDER BY COALESCE(slug, '')
+`)
+const rows = []
+while (stmt.step()) rows.push(stmt.getAsObject())
+stmt.free()
+
+// Last sync info
+let lastSynced = ''
+try {
+  const s = db.prepare(`SELECT value FROM _meta WHERE key = 'last_synced'`)
+  if (s.step()) lastSynced = s.getAsObject().value
+  s.free()
+} catch {}
+meta.textContent = `${rows.length} rows · last sync ${lastSynced ? new Date(lastSynced).toLocaleString() : '?'}`
+
+// Populate filter dropdowns
+function distinct(field) {
+  return [...new Set(rows.map(r => r[field]).filter(Boolean))].sort()
+}
+function fillSelect(sel, vals) {
+  for (const v of vals) {
+    const opt = document.createElement('option')
+    opt.value = v; opt.textContent = v
+    sel.appendChild(opt)
+  }
+}
+fillSelect($('#filter-status'), distinct('status'))
+fillSelect($('#filter-category'), distinct('category'))
+fillSelect($('#filter-type'), distinct('type'))
+
+// Sort state
+let sortField = 'slug'
+let sortDir = 1
+
+function statusClass(s) {
+  if (!s) return 'b-status-rfw'
+  if (s === 'Completed') return 'b-status-completed'
+  if (s === 'Ready for implementation') return 'b-status-rfi'
+  if (s === 'In progress') return 'b-status-ip'
+  return 'b-status-rfw'
+}
+
+function render() {
+  const q = $('#q').value.trim().toLowerCase()
+  const fStatus = $('#filter-status').value
+  const fCategory = $('#filter-category').value
+  const fRepo = $('#filter-repo').value
+  const fType = $('#filter-type').value
+
+  let filtered = rows.filter(r => {
+    if (fStatus && r.status !== fStatus) return false
+    if (fCategory && r.category !== fCategory) return false
+    if (fRepo !== '' && String(r.in_repo) !== fRepo) return false
+    if (fType && r.type !== fType) return false
+    if (q) {
+      const hay = `${r.slug || ''} ${r.name || ''} ${r.category || ''}`.toLowerCase()
+      if (!hay.includes(q)) return false
+    }
+    return true
+  })
+
+  // sort
+  filtered.sort((a, b) => {
+    const av = a[sortField] ?? ''
+    const bv = b[sortField] ?? ''
+    if (av < bv) return -1 * sortDir
+    if (av > bv) return 1 * sortDir
+    return 0
+  })
+
+  // stats
+  const totalRepo = filtered.filter(r => r.in_repo === 1).length
+  const totalPlanned = filtered.filter(r => r.in_repo === 0 && r.slug).length
+  const totalNoSlug = filtered.filter(r => !r.slug).length
+  $('#stats').innerHTML = `
+    <div class="stat">visible: <b>${filtered.length}</b> / ${rows.length}</div>
+    <div class="stat">in repo: <b>${totalRepo}</b></div>
+    <div class="stat">planned: <b>${totalPlanned}</b></div>
+    <div class="stat">no slug: <b>${totalNoSlug}</b></div>
+  `
+
+  // rows
+  const tbody = $('#rows')
+  $('#empty').hidden = filtered.length > 0
+  const out = []
+  for (const r of filtered.slice(0, 1000)) {
+    const slug = r.slug || ''
+    const slugCell = r.in_repo
+      ? `<a href="https://purecalculators.com/${slug}/" target="_blank" rel="noopener">${slug}</a>`
+      : (slug ? `<span title="not in repo">${slug}</span>` : `<span style="opacity:.4">—</span>`)
+    const repoBadge = r.in_repo
+      ? `<span class="badge b-repo">repo</span>`
+      : (r.slug ? `<span class="badge b-plan">planned</span>` : `<span class="badge b-noslug">no slug</span>`)
+    const statusBadge = r.status
+      ? `<span class="badge ${statusClass(r.status)}">${r.status}</span>`
+      : `<span style="opacity:.4">—</span>`
+    const flags = `
+      <span class="flag ${r.initialized ? 'on' : ''}" title="initialized">i</span>
+      <span class="flag ${r.ready_component ? 'on' : ''}" title="ready_component">c</span>
+      <span class="flag ${r.ready_article ? 'on' : ''}" title="ready_article">a</span>
+      <span class="flag ${r.published ? 'on' : ''}" title="published">P</span>
+    `
+    const lastEdit = r.last_edited_time ? new Date(r.last_edited_time).toLocaleDateString() : '—'
+    const name = r.name ? r.name.replace(/</g,'&lt;') : '<em style="opacity:.4">—</em>'
+    out.push(`<tr>
+      <td class="slug">${slugCell}</td>
+      <td>${name}</td>
+      <td>${r.type || ''}</td>
+      <td>${r.category || ''}</td>
+      <td>${repoBadge} ${statusBadge}</td>
+      <td>${r.writer || ''}</td>
+      <td><div class="flags">${flags}</div></td>
+      <td title="${r.last_edited_time || ''}">${lastEdit}</td>
+    </tr>`)
+  }
+  tbody.innerHTML = out.join('')
+  $('#footer').textContent = filtered.length > 1000
+    ? `showing first 1000 of ${filtered.length} — refine filters to see more`
+    : ''
+}
+
+// Wire interactions
+$('#q').addEventListener('input', render)
+$('#filter-status').addEventListener('change', render)
+$('#filter-category').addEventListener('change', render)
+$('#filter-repo').addEventListener('change', render)
+$('#filter-type').addEventListener('change', render)
+$('#reset').addEventListener('click', () => {
+  $('#q').value = ''
+  $$('select').forEach(s => s.value = '')
+  render()
+})
+$$('th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const f = th.dataset.sort
+    if (sortField === f) sortDir = -sortDir
+    else { sortField = f; sortDir = 1 }
+    render()
+  })
+})
+
+render()
+</script>
+</body>
+</html>

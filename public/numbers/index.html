@@ -88,9 +88,8 @@
 
 <section class="panel" id="p-purecalc">
   <div style="padding:10px 24px;color:var(--muted);font-size:12px">
-    Live calc-status dashboard from
-    <a href="https://purecalculators.com/dashboard/" target="_blank" rel="noopener" style="color:var(--accent)">purecalculators.com/dashboard</a>
-    — regenerated on every PureCalculators deploy.
+    PureCalculators calc-status dashboard — live data (status / checklist /
+    top-earners) proxied from purecalculators.com, refreshed every PC deploy.
   </div>
   <iframe id="pcframe" title="PureCalculators build dashboard" loading="lazy"
     style="width:100%;height:calc(100vh - 150px);border:0;background:#fff"></iframe>
@@ -210,7 +209,7 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
   t.classList.add('active');
   $('#p-'+t.dataset.tab).classList.add('active');
-  if(t.dataset.tab==='purecalc'){const f=$('#pcframe');if(!f.src)f.src='https://purecalculators.com/dashboard/';}
+  if(t.dataset.tab==='purecalc'){const f=$('#pcframe');if(!f.src)f.src='/numbers/pc/';}
 }));
 </script>
 </body>
