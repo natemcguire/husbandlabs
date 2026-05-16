@@ -1,0 +1,12 @@
+name = "husbandlabs-analytics"
+main = "src/index.js"
+compatibility_date = "2026-05-01"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "husbandlabs-analytics"
+database_id = "d5a5954c-66e1-4735-bbcf-da45a60d19a6"
+
+[triggers]
+crons = ["17 4 * * *"]
