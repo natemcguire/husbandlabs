@@ -223,11 +223,12 @@ async function main() {
   // Only first-party data is trustworthy. The Cloudflare zone/RUM numbers are
   // sampled/clamped garbage (7d≈28d, page counts in multiples of 10), so for
   // any site without the beacon we show N/A — never a fabricated estimate.
+  const MIN_VISITORS = 2  // below this it's noise (self/bot) — show N/A, not "data"
   const fp = await fpOverview()
   let anyFP = false
   for (const s of live) {
     const f = fp[s.host]
-    if (f && f.pv28 > 0) {
+    if (f && (f.v28 || 0) >= MIN_VISITORS) {
       s.pv7 = f.pv7; s.pv28 = f.pv28
       s.visitors7 = f.v7; s.visitors28 = f.v28
       s.src = 'first-party'; anyFP = true
@@ -270,7 +271,7 @@ async function main() {
   let pcDetail = null
   if (pcSite) {
     const d = await fpSite('purecalculators.com')
-    if (d && d.totals && d.totals.pv28 > 0) {
+    if (d && d.totals && (d.totals.v28 || 0) >= MIN_VISITORS) {
       pcDetail = {
         topPages: d.topPages, topReferrers: d.topReferrers,
         topCountries: d.topCountries, devices: d.devices, series: d.series
