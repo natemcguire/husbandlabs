@@ -210,7 +210,7 @@ async function main() {
     if (isClientHost(h)) continue
     const kind = classifyHost(h)
     if (kind === 'drop') continue
-    if (kind === 'staging') { staging.push({ host: h, pv7: v7, pv28: v28 }); continue }
+    if (kind === 'staging') { staging.push({ host: h }); continue }  // links only — no fake CF pv
     // top pages for every live site — no threshold (RUM only; zone API has no path dim on free)
     let topPages = []
     try { topPages = await topPagesForHost(h, 28) } catch {}
@@ -220,8 +220,10 @@ async function main() {
   // Override CF estimates with real first-party numbers where the beacon is
   // live. Sites without first-party data keep the (degraded) CF figures and
   // are flagged so the UI can show them as estimates.
+  // Only first-party data is trustworthy. The Cloudflare zone/RUM numbers are
+  // sampled/clamped garbage (7d≈28d, page counts in multiples of 10), so for
+  // any site without the beacon we show N/A — never a fabricated estimate.
   const fp = await fpOverview()
-  const cfTag = dataQuality === 'zone-daily' ? 'cf-zone' : 'cf-rum'
   let anyFP = false
   for (const s of live) {
     const f = fp[s.host]
@@ -229,12 +231,18 @@ async function main() {
       s.pv7 = f.pv7; s.pv28 = f.pv28
       s.visitors7 = f.v7; s.visitors28 = f.v28
       s.src = 'first-party'; anyFP = true
-    } else { s.src = cfTag }
+    } else {
+      s.src = 'no-data'
+      s.pv7 = null; s.pv28 = null
+      s.visitors7 = null; s.visitors28 = null
+      s.topPages = []
+    }
   }
   if (anyFP) dataQuality = 'first-party'
 
-  live.sort((a, b) => b.pv28 - a.pv28)
-  staging.sort((a, b) => b.pv28 - a.pv28)
+  const byPv = (a, b) => (b.pv28 ?? -1) - (a.pv28 ?? -1)
+  live.sort(byPv)
+  staging.sort(byPv)
 
   // App Store Connect metrics (best-effort — never block the dashboard)
   let appData = APPS.map(a => ({ ...a, installs7: null, installs28: null }))
@@ -279,8 +287,8 @@ async function main() {
     window: { short: '7d', long: '28d' },
     dataQuality,   // 'zone-daily' = real | 'cf-rum-limited' = 7d≈28d, needs Analytics:Read token
     totals: {
-      pv7: [pcSite, ...live].filter(Boolean).reduce((a, s) => a + s.pv7, 0),
-      pv28: [pcSite, ...live].filter(Boolean).reduce((a, s) => a + s.pv28, 0),
+      pv7: [pcSite, ...live].filter(Boolean).reduce((a, s) => a + (s.pv7 || 0), 0),
+      pv28: [pcSite, ...live].filter(Boolean).reduce((a, s) => a + (s.pv28 || 0), 0),
       visitors28: [pcSite, ...live].filter(Boolean).reduce((a, s) => a + (s.visitors28 || 0), 0),
       siteCount: live.length + (pcSite ? 1 : 0)
     },

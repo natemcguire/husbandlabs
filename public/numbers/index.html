@@ -111,7 +111,7 @@ function trend(s){ if(s.src!=='first-party') return {c:'flat',t:''};
   const d=(r7-r28)/r28; if(d>0.15) return {c:'up',t:'▲ '+Math.round(d*100)+'%'};
   if(d<-0.15) return {c:'down',t:'▼ '+Math.round(Math.abs(d)*100)+'%'}; return {c:'flat',t:'≈ steady'}; }
 function srcBadge(s){ return s.src==='first-party' ? ''
-  : `<span class="tag" title="Cloudflare estimate — beacon not yet live on this site; numbers are approximate">est.</span>`; }
+  : `<span class="tag" title="No first-party analytics beacon on this site yet — no real data to show">no data</span>`; }
 function pagesList(host, pages, cls){ return !pages||!pages.length
   ? '<li class="pv" style="color:var(--muted);font-style:italic">no page data</li>'
   : pages.map(p=>`<li><a href="https://${host}${p.path}" target="_blank" rel="noopener">${p.path}</a><span class="pv">${fmt(p.pv)}${p.v!=null?` · ${fmt(p.v)}v`:''}</span></li>`).join(''); }
@@ -140,7 +140,7 @@ function appCard(a){ const live = a.listed && /live/i.test(a.status||'');
 fetch('./data.json?'+Date.now()).then(r=>r.json()).then(d=>{
   const dq = d.dataQuality==='first-party'
     ? '<span class="tag" style="background:#16341f;color:#7ee2a8">first-party</span>'
-    : '<span class="tag" title="Cloudflare zone/RUM estimate — first-party beacon collecting; numbers firm up once it has history">Cloudflare est.</span>';
+    : '<span class="tag" title="No first-party data yet — beacon collecting">no data yet</span>';
   $('#gen').innerHTML = 'updated '+new Date(d.generated).toLocaleString()+' · '+d.totals.siteCount+' live sites · '+d.staging.length+' staging · '+dq;
   $('#totals').innerHTML = `
     <div class="tot"><div class="n">${fmt(d.totals.pv7)}</div><div class="l">pageviews · 7d</div></div>
@@ -207,7 +207,7 @@ fetch('./data.json?'+Date.now()).then(r=>r.json()).then(d=>{
   // Staging tab
   const stg = [
     ...d.stagingLinks.map(l=>({url:l.url, label:l.label, tag:'curated'})),
-    ...d.staging.map(s=>({url:'https://'+s.host+'/', label:s.host, tag:s.pv28+' pv/28d'}))
+    ...d.staging.map(s=>({url:'https://'+s.host+'/', label:s.host, tag:'staging'}))
   ];
   const seen=new Set();
   $('#staging').innerHTML = stg.filter(x=>!seen.has(x.url)&&seen.add(x.url))
