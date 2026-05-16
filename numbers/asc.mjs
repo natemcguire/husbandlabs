@@ -85,9 +85,31 @@ async function salesUnits(vendorNumber, reportDate) {
   return bySku
 }
 
+// Build count per app id. Paginated; one query covers many apps via the
+// comma-separated filter[app]. A build's owning app is in
+// relationships.app.data.id.
+async function buildCountsByApp(appIds) {
+  const counts = {}
+  for (const id of appIds) counts[id] = 0
+  // include=app is REQUIRED for the build→app linkage. Do NOT add
+  // fields[builds]=… — a sparse fieldset on builds strips ALL relationships,
+  // making every count 0.
+  let url = `/v1/builds?filter[app]=${appIds.join(',')}&limit=200&include=app&fields[apps]=name`
+  for (let guard = 0; guard < 20 && url; guard++) {
+    const page = await asc(url)
+    for (const b of page.data || []) {
+      const aid = b.relationships?.app?.data?.id
+      if (aid && aid in counts) counts[aid]++
+    }
+    const next = page.links?.next
+    url = next ? next.replace('https://api.appstoreconnect.apple.com', '') : null
+  }
+  return counts
+}
+
 export async function getAppMetrics({ vendorNumber } = {}) {
   // 1. List apps (metadata + App Store state)
-  const apps = await asc('/v1/apps?limit=50&fields[apps]=name,bundleId,sku')
+  const apps = await asc('/v1/apps?limit=200&fields[apps]=name,bundleId,sku')
   const out = []
   for (const a of apps.data || []) {
     out.push({
@@ -97,6 +119,11 @@ export async function getAppMetrics({ vendorNumber } = {}) {
       sku: a.attributes.sku
     })
   }
+
+  // 1b. Build counts — used to hide empty/placeholder app records
+  let builds = {}
+  try { builds = await buildCountsByApp(out.map(a => a.id)) } catch { builds = {} }
+  for (const app of out) app.builds = builds[app.id] ?? 0
 
   // 2. Sales units (last 7 + 28 days) if we have a vendor number
   let sales7 = {}, sales28 = {}
@@ -126,9 +153,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   getAppMetrics({ vendorNumber: vendorArg ? vendorArg.split('=')[1] : undefined })
     .then(r => {
       console.log('Apps visible to this API key:')
-      for (const a of r.apps) {
-        console.log(`  ${a.name}  [${a.bundle}]  sku=${a.sku}  id=${a.id}  ` +
-          (r.hasVendor ? `installs 7d=${a.installs7} 28d=${a.installs28}` : '(no vendor # — sales not pulled)'))
+      const showAll = process.argv.includes('--all')
+      const list = showAll ? r.apps : r.apps.filter(a => (a.builds || 0) >= 2)
+      console.log(`(${list.length}/${r.apps.length} with 2+ builds${showAll ? ' — showing all' : ''})`)
+      for (const a of list.sort((x, y) => (y.builds || 0) - (x.builds || 0))) {
+        console.log(`  builds=${String(a.builds).padStart(2)}  ${a.name}  [${a.bundle}]  sku=${a.sku}  id=${a.id}  ` +
+          (r.hasVendor ? `installs 7d=${a.installs7} 28d=${a.installs28}` : ''))
       }
     })
     .catch(e => { console.error('FATAL:', e.message); process.exit(1) })

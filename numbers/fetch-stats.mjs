@@ -57,12 +57,6 @@ const STAGING_LINKS = [
   { label: 'PureCalculators · staging dashboard', url: 'https://staging.purecalculators.com/dashboard/' }
 ]
 
-// The PureCalculators cluster gets a wide featured panel: the website plus its
-// companion iOS app (Steps-to-km is a native port of the steps-to-km calc).
-const APPS = [
-  { name: 'Steps to km · Miles', cluster: 'purecalculators', bundle: 'com.eastbayprojects.steps', sku: 'STEPS', status: 'in development' },
-  { name: 'What Does the Cow Say', cluster: 'standalone', bundle: 'easybayprojects.littlebob', sku: 'whatdoesthecowsay', status: 'live on App Store' }
-]
 
 function isoDaysAgo(n) { return new Date(Date.now() - n * 864e5).toISOString().slice(0, 10) }
 
@@ -245,22 +239,27 @@ async function main() {
   live.sort(byPv)
   staging.sort(byPv)
 
-  // App Store Connect metrics (best-effort — never block the dashboard)
-  let appData = APPS.map(a => ({ ...a, installs7: null, installs28: null }))
+  // App Store Connect: list every app with 2+ builds (a real app we've
+  // iterated on, not an empty placeholder record). Best-effort.
+  let appData = []
   try {
     const { getAppMetrics } = await import('./asc.mjs')
     const m = await getAppMetrics({ vendorNumber: process.env.ASC_VENDOR_NUMBER })
-    const bySku = Object.fromEntries(m.apps.map(x => [x.sku, x]))
-    appData = APPS.map(a => {
-      const live = bySku[a.sku]
-      return {
-        ...a,
-        appStoreId: live?.id || null,
-        installs7: live?.installs7 ?? null,
-        installs28: live?.installs28 ?? null,
-        listed: !!live
-      }
-    })
+    appData = m.apps
+      .filter(a => (a.builds || 0) >= 2)
+      .map(a => ({
+        name: a.name,
+        bundle: a.bundle,
+        sku: a.sku,
+        appStoreId: a.id,
+        builds: a.builds,
+        installs7: a.installs7 ?? null,
+        installs28: a.installs28 ?? null,
+        listed: true,
+        cluster: /^com\.eastbayprojects\./.test(a.bundle) ? 'purecalculators' : 'standalone',
+        status: (a.installs28 != null && a.installs28 > 0) ? 'live on App Store' : 'in development',
+      }))
+      .sort((a, b) => (b.installs28 || 0) - (a.installs28 || 0) || b.builds - a.builds)
   } catch (e) { console.warn('ASC fetch skipped:', e.message) }
 
   // Pull the PureCalculators website out as the featured cluster

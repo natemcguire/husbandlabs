@@ -134,7 +134,7 @@ function appCard(a){ const live = a.listed && /live/i.test(a.status||'');
   const counts = (a.installs28!=null)
     ? `<div class="nums"><div><div class="v">${fmt(a.installs7)}</div><div class="k">inst 7d</div></div><div><div class="v">${fmt(a.installs28)}</div><div class="k">inst 28d</div></div></div>`
     : '';
-  return `<div class="appcard"><h4>${a.name}</h4><div class="meta">${a.bundle}</div>${counts}
+  return `<div class="appcard"><h4>${a.name}</h4><div class="meta">${a.bundle}${a.builds!=null?` · ${a.builds} builds`:''}</div>${counts}
     <span class="badge ${live?'live':'dev'}">${a.status}${a.installs28==null?' · installs n/a':''}</span></div>`; }
 
 fetch('./data.json?'+Date.now()).then(r=>r.json()).then(d=>{
