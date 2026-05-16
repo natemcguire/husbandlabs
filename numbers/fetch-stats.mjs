@@ -256,8 +256,13 @@ async function main() {
         installs7: a.installs7 ?? null,
         installs28: a.installs28 ?? null,
         listed: true,
+        onSale: a.onSale ?? null,
         cluster: /^com\.eastbayprojects\./.test(a.bundle) ? 'purecalculators' : 'standalone',
-        status: (a.installs28 != null && a.installs28 > 0) ? 'live on App Store' : 'in development',
+        // Truth = territory availability, not install count (pulled apps still
+        // show re-downloads). false = pulled; null = never released.
+        status: a.onSale === true ? 'live on App Store'
+          : a.onSale === false ? 'removed from sale'
+          : (a.installs28 != null && a.installs28 > 0) ? 'live on App Store' : 'in development',
       }))
       .sort((a, b) => (b.installs28 || 0) - (a.installs28 || 0) || b.builds - a.builds)
   } catch (e) { console.warn('ASC fetch skipped:', e.message) }

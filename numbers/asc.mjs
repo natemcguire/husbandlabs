@@ -125,6 +125,20 @@ export async function getAppMetrics({ vendorNumber } = {}) {
   try { builds = await buildCountsByApp(out.map(a => a.id)) } catch { builds = {} }
   for (const app of out) app.builds = builds[app.id] ?? 0
 
+  // 1c. Sale availability (only for apps we'd surface — 2+ builds; one request
+  // each, 175 territories fit in a single page). An app available in zero
+  // territories is removed from sale, regardless of appStoreState or whether
+  // existing users still re-download (which keeps install counts non-zero).
+  await Promise.all(out.filter(a => a.builds >= 2).map(async a => {
+    // onSale: true = sellable somewhere · false = has an availability record
+    // but zero territories (was configured for sale, now pulled) · null = no
+    // availability record at all (never released — still in development).
+    try {
+      const t = await asc(`/v2/appAvailabilities/${a.id}/territoryAvailabilities?limit=200&fields[territoryAvailabilities]=available`)
+      a.onSale = (t.data || []).length === 0 ? null : (t.data).some(x => x.attributes?.available === true)
+    } catch { a.onSale = null }
+  }))
+
   // 2. Sales units (last 7 + 28 days) if we have a vendor number
   let sales7 = {}, sales28 = {}
   const vendor = vendorNumber || process.env.ASC_VENDOR_NUMBER
