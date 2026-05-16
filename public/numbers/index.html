@@ -6,122 +6,172 @@
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
 <title>HusbandLabs · numbers</title>
 <style>
-  :root {
-    color-scheme: dark;
-    --bg:#0c0d10; --card:#15171c; --br:#262a31; --ink:#e8eaed; --muted:#8b919b;
-    --accent:#8b5cf6; --ok:#34d399; --warn:#fbbf24; --bad:#f87171;
-  }
+  :root { color-scheme:dark; --bg:#0c0d10; --card:#15171c; --card2:#1b1e25; --br:#262a31;
+    --ink:#e8eaed; --muted:#8b919b; --accent:#8b5cf6; --ok:#34d399; --warn:#fbbf24; --bad:#f87171; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--ink);
     font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-  header { padding:20px 24px; border-bottom:1px solid var(--br); display:flex;
-    align-items:baseline; gap:18px; flex-wrap:wrap; }
-  header h1 { margin:0; font-size:17px; font-weight:600; letter-spacing:.02em; }
+  header { padding:20px 24px 0; }
+  header h1 { margin:0; font-size:17px; font-weight:600; }
   header .sub { color:var(--muted); font-size:12px; }
-  .totals { display:flex; gap:28px; padding:16px 24px; flex-wrap:wrap;
-    border-bottom:1px solid var(--br); }
-  .tot { }
+  .tabs { display:flex; gap:6px; padding:14px 24px 0; border-bottom:1px solid var(--br); }
+  .tab { padding:8px 16px; cursor:pointer; font-size:13px; font-weight:600; color:var(--muted);
+    border:1px solid transparent; border-bottom:none; border-radius:8px 8px 0 0; }
+  .tab.active { color:var(--ink); background:var(--card); border-color:var(--br); }
+  .panel { display:none; }
+  .panel.active { display:block; }
+  .totals { display:flex; gap:28px; padding:18px 24px; flex-wrap:wrap; border-bottom:1px solid var(--br); }
   .tot .n { font-size:24px; font-weight:700; }
   .tot .l { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
-    gap:14px; padding:20px 24px; }
-  .site { background:var(--card); border:1px solid var(--br); border-radius:10px;
-    padding:14px 16px; }
-  .site h2 { margin:0 0 2px; font-size:15px; font-weight:600; }
-  .site h2 a { color:var(--ink); text-decoration:none; }
-  .site h2 a:hover { color:var(--accent); }
-  .nums { display:flex; gap:20px; margin:10px 0 12px; }
-  .nums .v { font-size:20px; font-weight:700; }
-  .nums .k { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
-  .trend { font-size:12px; font-weight:600; padding:1px 7px; border-radius:10px; align-self:center; }
-  .trend.up { background:#34d39922; color:var(--ok); }
-  .trend.flat { background:#8b919b22; color:var(--muted); }
+  .featured { margin:20px 24px; background:linear-gradient(180deg,#1c1830,#15171c);
+    border:1px solid #3a2f63; border-radius:14px; padding:18px 20px; }
+  .featured .ftitle { font-size:16px; font-weight:700; }
+  .featured .ftitle a { color:var(--ink); text-decoration:none; }
+  .featured .ftitle a:hover { color:var(--accent); }
+  .featured .row { display:flex; gap:30px; flex-wrap:wrap; margin:14px 0; align-items:flex-start; }
+  .bignums { display:flex; gap:26px; }
+  .bignums .v { font-size:30px; font-weight:800; }
+  .bignums .k { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .trend { font-size:12px; font-weight:700; padding:2px 9px; border-radius:10px; align-self:center; }
+  .trend.up { background:#34d39922; color:var(--ok); } .trend.flat { background:#8b919b22; color:var(--muted); }
   .trend.down { background:#f8717122; color:var(--bad); }
-  .pages { list-style:none; margin:0; padding:0; border-top:1px solid var(--br); padding-top:8px; }
-  .pages li { display:flex; justify-content:space-between; gap:10px; padding:3px 0;
-    font-size:12.5px; }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:760px){ .cols{ grid-template-columns:1fr; } }
+  .colh { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 6px; }
+  .pages { list-style:none; margin:0; padding:0; }
+  .pages li { display:flex; justify-content:space-between; gap:10px; padding:3px 0; font-size:12.5px; }
   .pages li a { color:var(--accent); text-decoration:none; font-family:ui-monospace,monospace;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80%; }
   .pages li a:hover { text-decoration:underline; }
   .pages li .pv { color:var(--muted); flex-shrink:0; }
-  .pages .empty { color:var(--muted); font-style:italic; font-size:12px; }
-  .section-label { padding:8px 24px 0; font-size:11px; text-transform:uppercase;
-    letter-spacing:.06em; color:var(--muted); }
-  .apps { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-    gap:14px; padding:8px 24px 32px; }
-  .app { background:var(--card); border:1px solid var(--br); border-radius:10px;
-    padding:14px 16px; }
-  .app h3 { margin:0 0 4px; font-size:14px; }
-  .app .meta { font-size:11px; color:var(--muted); }
-  .app .badge { display:inline-block; margin-top:8px; font-size:11px; padding:2px 8px;
-    border-radius:10px; background:#fbbf2422; color:var(--warn); }
-  footer { padding:16px 24px 40px; color:var(--muted); font-size:11px; }
+  .appcard { background:var(--card2); border:1px solid var(--br); border-radius:10px; padding:12px 14px; }
+  .appcard h4 { margin:0 0 3px; font-size:13px; }
+  .appcard .meta { font-size:11px; color:var(--muted); }
+  .appcard .badge { display:inline-block; margin-top:7px; font-size:11px; padding:2px 8px; border-radius:10px; }
+  .badge.live { background:#34d39922; color:var(--ok); } .badge.dev { background:#fbbf2422; color:var(--warn); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:14px; padding:20px 24px; }
+  .site { background:var(--card); border:1px solid var(--br); border-radius:10px; padding:14px 16px; }
+  .site h2 { margin:0 0 8px; font-size:14px; font-weight:600; }
+  .site h2 a { color:var(--ink); text-decoration:none; } .site h2 a:hover { color:var(--accent); }
+  .nums { display:flex; gap:18px; margin-bottom:10px; }
+  .nums .v { font-size:18px; font-weight:700; } .nums .k { font-size:10px; color:var(--muted); text-transform:uppercase; }
+  .pages.mini { border-top:1px solid var(--br); padding-top:7px; }
+  .section-label { padding:4px 24px 0; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .stglist { padding:20px 24px; }
+  .stglist a { display:block; padding:10px 14px; margin-bottom:8px; background:var(--card);
+    border:1px solid var(--br); border-radius:8px; color:var(--accent); text-decoration:none;
+    font-family:ui-monospace,monospace; font-size:13px; }
+  .stglist a:hover { border-color:var(--accent); }
+  .stglist .tag { float:right; color:var(--muted); font-family:-apple-system,sans-serif; font-size:11px; }
+  footer { padding:18px 24px 44px; color:var(--muted); font-size:11px; }
 </style>
 </head>
 <body>
 <header>
   <h1>HusbandLabs · numbers</h1>
-  <span class="sub" id="gen">loading…</span>
+  <div class="sub" id="gen">loading…</div>
 </header>
-<div class="totals" id="totals"></div>
-<div class="section-label">Websites — Cloudflare Web Analytics</div>
-<div class="grid" id="sites"></div>
-<div class="section-label">iOS apps — App Store Connect</div>
-<div class="apps" id="apps"></div>
+<div class="tabs">
+  <div class="tab active" data-tab="overview">Overview</div>
+  <div class="tab" data-tab="staging">Staging</div>
+</div>
+
+<section class="panel active" id="p-overview">
+  <div class="totals" id="totals"></div>
+  <div class="featured" id="featured"></div>
+  <div class="section-label">Other apps</div>
+  <div class="grid" id="apps"></div>
+  <div class="section-label">Other sites</div>
+  <div class="grid" id="sites"></div>
+</section>
+
+<section class="panel" id="p-staging">
+  <div class="stglist" id="staging"></div>
+</section>
+
 <footer id="foot"></footer>
 
 <script>
 const $ = s => document.querySelector(s)
 const fmt = n => n == null ? '—' : n.toLocaleString()
+function trend(pv7, pv28){ const r7=pv7/7,r28=pv28/28; if(!r28) return {c:'flat',t:'—'};
+  const d=(r7-r28)/r28; if(d>0.1) return {c:'up',t:'▲ '+Math.round(d*100)+'%'};
+  if(d<-0.1) return {c:'down',t:'▼ '+Math.round(Math.abs(d)*100)+'%'}; return {c:'flat',t:'≈ steady'}; }
+function pagesList(host, pages, cls){ return !pages||!pages.length
+  ? '<li class="pv" style="color:var(--muted);font-style:italic">no page data</li>'
+  : pages.map(p=>`<li><a href="https://${host}${p.path}" target="_blank" rel="noopener">${p.path}</a><span class="pv">${fmt(p.pv)}</span></li>`).join(''); }
+function appCard(a){ const live = a.listed && /live/i.test(a.status||'');
+  const counts = (a.installs28!=null)
+    ? `<div class="nums"><div><div class="v">${fmt(a.installs7)}</div><div class="k">inst 7d</div></div><div><div class="v">${fmt(a.installs28)}</div><div class="k">inst 28d</div></div></div>`
+    : '';
+  return `<div class="appcard"><h4>${a.name}</h4><div class="meta">${a.bundle}</div>${counts}
+    <span class="badge ${live?'live':'dev'}">${a.status}${a.installs28==null?' · installs n/a':''}</span></div>`; }
 
-function trendFor(pv7, pv28) {
-  // daily rate over the 7d window vs daily rate over the 28d window
-  const r7 = pv7 / 7, r28 = pv28 / 28
-  if (r28 === 0) return { cls:'flat', txt:'—' }
-  const delta = (r7 - r28) / r28
-  if (delta > 0.1)  return { cls:'up',   txt:'▲ ' + Math.round(delta*100) + '%' }
-  if (delta < -0.1) return { cls:'down', txt:'▼ ' + Math.round(Math.abs(delta)*100) + '%' }
-  return { cls:'flat', txt:'≈ steady' }
-}
-
-fetch('./data.json?' + Date.now()).then(r => r.json()).then(d => {
-  $('#gen').textContent = 'updated ' + new Date(d.generated).toLocaleString()
-    + ' · ' + d.totals.siteCount + ' sites'
-
+fetch('./data.json?'+Date.now()).then(r=>r.json()).then(d=>{
+  $('#gen').textContent = 'updated '+new Date(d.generated).toLocaleString()+' · '+d.totals.siteCount+' live sites · '+d.staging.length+' staging';
   $('#totals').innerHTML = `
     <div class="tot"><div class="n">${fmt(d.totals.pv7)}</div><div class="l">pageviews · 7d</div></div>
     <div class="tot"><div class="n">${fmt(d.totals.pv28)}</div><div class="l">pageviews · 28d</div></div>
-    <div class="tot"><div class="n">${d.totals.siteCount}</div><div class="l">active sites</div></div>`
+    <div class="tot"><div class="n">${d.totals.siteCount}</div><div class="l">live sites</div></div>`;
 
-  $('#sites').innerHTML = d.sites.map(s => {
-    const t = trendFor(s.pv7, s.pv28)
-    const pages = (s.topPages && s.topPages.length)
-      ? s.topPages.map(p => `<li><a href="https://${s.host}${p.path}" target="_blank" rel="noopener">${p.path}</a><span class="pv">${fmt(p.pv)}</span></li>`).join('')
-      : `<li class="empty">below top-pages threshold</li>`
+  // Featured: PureCalculators
+  const pc = d.purecalculators, s = pc.site;
+  if (s) {
+    const t = trend(s.pv7, s.pv28);
+    $('#featured').innerHTML = `
+      <div class="ftitle"><a href="https://${s.host}/" target="_blank" rel="noopener">★ PureCalculators</a></div>
+      <div class="row">
+        <div class="bignums">
+          <div><div class="v">${fmt(s.pv7)}</div><div class="k">pv · 7-day</div></div>
+          <div><div class="v">${fmt(s.pv28)}</div><div class="k">pv · 28-day</div></div>
+          <span class="trend ${t.c}">${t.t}</span>
+        </div>
+      </div>
+      <div class="cols">
+        <div>
+          <p class="colh">Top pages (28d)</p>
+          <ul class="pages">${pagesList(s.host, s.topPages)}</ul>
+        </div>
+        <div>
+          <p class="colh">Companion apps</p>
+          ${pc.apps.map(appCard).join('') || '<div class="meta">none</div>'}
+        </div>
+      </div>`;
+  }
+
+  $('#apps').innerHTML = d.apps.map(appCard).join('') || '<div class="section-label">none</div>';
+
+  $('#sites').innerHTML = d.sites.map(s=>{ const t=trend(s.pv7,s.pv28);
     return `<div class="site">
       <h2><a href="https://${s.host}/" target="_blank" rel="noopener">${s.host}</a></h2>
       <div class="nums">
-        <div><div class="v">${fmt(s.pv7)}</div><div class="k">7-day</div></div>
-        <div><div class="v">${fmt(s.pv28)}</div><div class="k">28-day</div></div>
-        <span class="trend ${t.cls}">${t.txt}</span>
+        <div><div class="v">${fmt(s.pv7)}</div><div class="k">7d</div></div>
+        <div><div class="v">${fmt(s.pv28)}</div><div class="k">28d</div></div>
+        <span class="trend ${t.c}">${t.t}</span>
       </div>
-      <ul class="pages">${pages}</ul>
-    </div>`
-  }).join('')
+      <ul class="pages mini">${pagesList(s.host, (s.topPages||[]).slice(0,6))}</ul>
+    </div>`; }).join('');
 
-  $('#apps').innerHTML = d.apps.map(a => `
-    <div class="app">
-      <h3>${a.name}</h3>
-      <div class="meta">${a.bundle}</div>
-      ${a.metrics
-        ? `<div class="nums"><div><div class="v">${fmt(a.metrics.installs)}</div><div class="k">installs</div></div></div>`
-        : `<span class="badge">${a.status} · awaiting data</span>`}
-    </div>`).join('')
+  // Staging tab
+  const stg = [
+    ...d.stagingLinks.map(l=>({url:l.url, label:l.label, tag:'curated'})),
+    ...d.staging.map(s=>({url:'https://'+s.host+'/', label:s.host, tag:s.pv28+' pv/28d'}))
+  ];
+  const seen=new Set();
+  $('#staging').innerHTML = stg.filter(x=>!seen.has(x.url)&&seen.add(x.url))
+    .map(x=>`<a href="${x.url}" target="_blank" rel="noopener">${x.label}<span class="tag">${x.tag}</span></a>`).join('')
+    || '<div class="meta">no staging environments</div>';
 
-  $('#foot').textContent = 'Trend = 7-day daily rate vs 28-day daily rate. '
-    + 'Cloudflare Web Analytics is privacy-first and sampled; treat as directional. '
-    + 'noindex — internal use only.'
-}).catch(e => { $('#gen').textContent = 'data.json failed to load: ' + e.message })
+  $('#foot').textContent = 'Trend = 7-day vs 28-day daily rate. Cloudflare Web Analytics is sampled — directional. '
+    + 'Ephemeral previews (hashed subdomains) are excluded. noindex · password-gated.';
+}).catch(e=>{ $('#gen').textContent='data.json failed: '+e.message; });
+
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  $('#p-'+t.dataset.tab).classList.add('active');
+}));
 </script>
 </body>
 </html>

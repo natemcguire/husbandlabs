@@ -2,3 +2,7 @@
 .DS_Store
 node_modules/
 .wrangler/
+
+# generated daily by numbers/refresh.sh
+numbers/public/data.json
+public/numbers/data.json
