@@ -83,7 +83,7 @@ async function query(url, env) {
         SUM(CASE WHEN day>=? THEN 1 ELSE 0 END) pv7,
         COUNT(DISTINCT CASE WHEN day>=? THEN vis END) v7
        FROM hits WHERE ${W}`).bind(d7, d7, site, since).first(),
-    env.DB.prepare(`SELECT path, COUNT(*) pv FROM hits WHERE ${W} GROUP BY path ORDER BY pv DESC LIMIT 15`).bind(site, since).all(),
+    env.DB.prepare(`SELECT path, COUNT(*) pv, COUNT(DISTINCT vis) v FROM hits WHERE ${W} GROUP BY path ORDER BY pv DESC LIMIT 15`).bind(site, since).all(),
     env.DB.prepare(`SELECT ref, COUNT(*) pv FROM hits WHERE ${W} GROUP BY ref ORDER BY pv DESC LIMIT 10`).bind(site, since).all(),
     env.DB.prepare(`SELECT country, COUNT(*) pv FROM hits WHERE ${W} GROUP BY country ORDER BY pv DESC LIMIT 10`).bind(site, since).all(),
     env.DB.prepare(`SELECT device, COUNT(*) pv FROM hits WHERE ${W} GROUP BY device ORDER BY pv DESC`).bind(site, since).all(),

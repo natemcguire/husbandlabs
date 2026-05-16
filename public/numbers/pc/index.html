@@ -73,6 +73,7 @@
       <th style="text-align:left; padding:4px 8px; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;">#</th>
       <th style="text-align:left; padding:4px 8px; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;">slug</th>
       <th style="text-align:right; padding:4px 8px; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;">pageviews</th>
+      <th style="text-align:right; padding:4px 8px; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;">visitors</th>
       <th style="text-align:right; padding:4px 8px; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;">revenue</th>
       <th style="text-align:right; padding:4px 8px; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;">RPM</th>
       <th style="text-align:left; padding:4px 8px; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase;">in pipeline</th>
@@ -231,6 +232,7 @@ fetch('./top-earners.json').then(r => r.json()).then(data => {
     if (!allRowsHaveData) { empty.hidden = false }
     tbody.innerHTML = data.rows.map(r => {
       const pv = r.pageviews != null ? r.pageviews.toLocaleString() : '—'
+      const vis = r.visitors != null ? r.visitors.toLocaleString() : '—'
       const rev = r.revenue != null ? '$' + r.revenue.toFixed(2) : '—'
       const rpm = r.rpm != null ? '$' + r.rpm.toFixed(2) : (r.pageviews && r.revenue ? '$' + (r.revenue / r.pageviews * 1000).toFixed(2) : '—')
       const inPipeline = newSlugs.has(r.slug)
@@ -241,6 +243,7 @@ fetch('./top-earners.json').then(r => r.json()).then(data => {
         <td style="padding:4px 8px;">${r.rank}</td>
         <td style="padding:4px 8px; font-family:ui-monospace, monospace;"><a href="https://purecalculators.com/${r.slug}/" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:none;">${r.slug}</a></td>
         <td style="padding:4px 8px; text-align:right;">${pv}</td>
+        <td style="padding:4px 8px; text-align:right;">${vis}</td>
         <td style="padding:4px 8px; text-align:right;">${rev}</td>
         <td style="padding:4px 8px; text-align:right;"><span class="pill ${rpmClass}">${rpm}</span></td>
         <td style="padding:4px 8px;">${pipPill}</td>

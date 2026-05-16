@@ -114,7 +114,19 @@ function srcBadge(s){ return s.src==='first-party' ? ''
   : `<span class="tag" title="Cloudflare estimate — beacon not yet live on this site; numbers are approximate">est.</span>`; }
 function pagesList(host, pages, cls){ return !pages||!pages.length
   ? '<li class="pv" style="color:var(--muted);font-style:italic">no page data</li>'
-  : pages.map(p=>`<li><a href="https://${host}${p.path}" target="_blank" rel="noopener">${p.path}</a><span class="pv">${fmt(p.pv)}</span></li>`).join(''); }
+  : pages.map(p=>`<li><a href="https://${host}${p.path}" target="_blank" rel="noopener">${p.path}</a><span class="pv">${fmt(p.pv)}${p.v!=null?` · ${fmt(p.v)}v`:''}</span></li>`).join(''); }
+// Inline sparkline of daily pageviews (real series data we already fetch).
+function spark(series){ const a=(series||[]).map(x=>x.pv); if(a.length<2) return '';
+  const w=180,h=34,mx=Math.max(...a,1),pts=a.map((v,i)=>`${(i/(a.length-1)*w).toFixed(1)},${(h-2-v/mx*(h-4)).toFixed(1)}`).join(' ');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="display:block">
+    <polyline fill="none" stroke="var(--accent)" stroke-width="1.5" points="${pts}"/></svg>`; }
+// Honest delta: last 7 full days vs the 7 before. Blank unless ≥14 days exist.
+function delta7(series){ const a=(series||[]).map(x=>x.pv); if(a.length<14) return {c:'flat',t:''};
+  const last=a.slice(-7).reduce((x,y)=>x+y,0), prev=a.slice(-14,-7).reduce((x,y)=>x+y,0);
+  if(!prev) return {c:'flat',t:''}; const d=(last-prev)/prev;
+  if(d>0.05) return {c:'up',t:'▲ '+Math.round(d*100)+'% vs prior 7d'};
+  if(d<-0.05) return {c:'down',t:'▼ '+Math.round(Math.abs(d)*100)+'% vs prior 7d'};
+  return {c:'flat',t:'≈ flat vs prior 7d'}; }
 function miniList(items, keyf){ return !items||!items.length
   ? '<li class="pv" style="color:var(--muted);font-style:italic">—</li>'
   : items.map(x=>`<li><span>${keyf(x)}</span><span class="pv">${fmt(x.pv)}</span></li>`).join(''); }
@@ -139,7 +151,8 @@ fetch('./data.json?'+Date.now()).then(r=>r.json()).then(d=>{
   // Featured: PureCalculators
   const pc = d.purecalculators, s = pc.site, det = pc.detail;
   if (s) {
-    const t = trend(s);
+    const t = (det && det.series && det.series.length >= 14) ? delta7(det.series) : trend(s);
+    const sk = det && det.series ? spark(det.series) : '';
     const who = det ? `
         <div>
           <p class="colh">Top referrers (28d)</p>
@@ -162,6 +175,7 @@ fetch('./data.json?'+Date.now()).then(r=>r.json()).then(d=>{
           <div><div class="v">${fmt(s.visitors28)}</div><div class="k">visitors · 28d</div></div>
           <span class="trend ${t.c}">${t.t}</span>
         </div>
+        ${sk ? `<div style="flex:1;min-width:180px;max-width:340px"><div class="k" style="margin-bottom:4px">daily pageviews (${det.series.length}d)</div>${sk}</div>` : ''}
       </div>
       <div class="cols">
         <div>
