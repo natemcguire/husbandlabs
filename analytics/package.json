@@ -1,0 +1,8 @@
+{
+  "name": "husbandlabs-analytics",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --no-warnings --test test/worker.test.mjs"
+  }
+}

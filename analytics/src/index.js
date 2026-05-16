@@ -15,15 +15,18 @@ const CORS = {
 const json = (o, s = 200) =>
   new Response(JSON.stringify(o), { status: s, headers: { 'content-type': 'application/json', ...CORS } })
 
-function host(u) {
+export function host(u) {
   try { return new URL(u).hostname.replace(/^www\./, '').toLowerCase() } catch { return '' }
 }
-function device(ua = '') {
+export function device(ua = '') {
   if (/\bTablet\b|\biPad\b/i.test(ua)) return 'tablet'
   if (/Mobi|Android.+Mobile|iPhone|iPod/i.test(ua)) return 'mobile'
   return 'desktop'
 }
-async function visHash(day, site, ip, ua) {
+export function isBot(ua = '') {
+  return /bot|crawl|spider|preview|HeadlessChrome|Lighthouse|monitor|curl|wget|python-requests|axios|node-fetch/i.test(ua)
+}
+export async function visHash(day, site, ip, ua) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${day}|${site}|${ip}|${ua}`))
   return [...new Uint8Array(buf)].slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('')
 }
@@ -31,11 +34,14 @@ async function visHash(day, site, ip, ua) {
 async function collect(req, env) {
   let d
   try { d = await req.json() } catch { return new Response(null, { status: 204, headers: CORS }) }
-  const site = host(d.s ? `https://${d.s}` : '') || host(req.headers.get('origin') || '') || 'unknown'
+  // Trust the browser-set Origin first — page JS cannot forge a cross-origin
+  // Origin on sendBeacon, so this prevents one site spoofing another's stats.
+  // Fall back to the claimed `s` only when Origin is absent.
+  const site = host(req.headers.get('origin') || '') || host(d.s ? `https://${d.s}` : '') || 'unknown'
   let path = String(d.p || '/').slice(0, 512)
   if (!path.startsWith('/')) path = '/' + path
   const ua = req.headers.get('user-agent') || ''
-  if (/bot|crawl|spider|preview|HeadlessChrome|Lighthouse/i.test(ua)) return new Response(null, { status: 204, headers: CORS })
+  if (isBot(ua)) return new Response(null, { status: 204, headers: CORS })
   const ip = req.headers.get('cf-connecting-ip') || ''
   const now = Date.now()
   const day = new Date(now).toISOString().slice(0, 10)
@@ -102,7 +108,8 @@ export default {
       if (req.method === 'GET' && url.pathname === '/q') return await query(url, env)
       if (url.pathname === '/') return new Response('ok', { status: 200, headers: CORS })
     } catch (e) {
-      return json({ error: String(e && e.message || e) }, 500)
+      console.error('worker error:', e && e.stack || e)
+      return json({ error: 'internal error' }, 500)
     }
     return new Response('not found', { status: 404, headers: CORS })
   },
