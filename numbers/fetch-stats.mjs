@@ -66,6 +66,26 @@ const APPS = [
 
 function isoDaysAgo(n) { return new Date(Date.now() - n * 864e5).toISOString().slice(0, 10) }
 
+// ── First-party analytics (real, coherent — replaces CF zone/RUM) ──────────
+const FP_URL = process.env.ANALYTICS_URL
+const FP_TOKEN = process.env.ANALYTICS_TOKEN
+async function fpOverview() {
+  if (!FP_URL || !FP_TOKEN) return {}
+  try {
+    const r = await fetch(`${FP_URL}/q?token=${encodeURIComponent(FP_TOKEN)}&days=28`)
+    const j = await r.json()
+    return Object.fromEntries((j.sites || []).map(s => [s.site, s]))
+  } catch (e) { console.warn('first-party overview unavailable:', e.message); return {} }
+}
+async function fpSite(host) {
+  if (!FP_URL || !FP_TOKEN) return null
+  try {
+    const r = await fetch(`${FP_URL}/q?token=${encodeURIComponent(FP_TOKEN)}&site=${encodeURIComponent(host)}&days=28`)
+    if (!r.ok) return null
+    return await r.json()
+  } catch { return null }
+}
+
 async function gql(query, variables) {
   const res = await fetch('https://api.cloudflare.com/client/v4/graphql', {
     method: 'POST',
@@ -197,6 +217,22 @@ async function main() {
     if (topPages.length === 0) { try { topPages = await topPagesForHost('www.' + h, 28) } catch {} }
     live.push({ host: h, pv7: v7, pv28: v28, topPages })
   }
+  // Override CF estimates with real first-party numbers where the beacon is
+  // live. Sites without first-party data keep the (degraded) CF figures and
+  // are flagged so the UI can show them as estimates.
+  const fp = await fpOverview()
+  const cfTag = dataQuality === 'zone-daily' ? 'cf-zone' : 'cf-rum'
+  let anyFP = false
+  for (const s of live) {
+    const f = fp[s.host]
+    if (f && f.pv28 > 0) {
+      s.pv7 = f.pv7; s.pv28 = f.pv28
+      s.visitors7 = f.v7; s.visitors28 = f.v28
+      s.src = 'first-party'; anyFP = true
+    } else { s.src = cfTag }
+  }
+  if (anyFP) dataQuality = 'first-party'
+
   live.sort((a, b) => b.pv28 - a.pv28)
   staging.sort((a, b) => b.pv28 - a.pv28)
 
@@ -222,6 +258,22 @@ async function main() {
   const pcIdx = live.findIndex(s => s.host === 'purecalculators.com')
   const pcSite = pcIdx >= 0 ? live.splice(pcIdx, 1)[0] : null
 
+  // Rich first-party breakdown for the featured panel (who the users are)
+  let pcDetail = null
+  if (pcSite) {
+    const d = await fpSite('purecalculators.com')
+    if (d && d.totals && d.totals.pv28 > 0) {
+      pcDetail = {
+        topPages: d.topPages, topReferrers: d.topReferrers,
+        topCountries: d.topCountries, devices: d.devices, series: d.series
+      }
+      pcSite.topPages = d.topPages.map(p => ({ path: p.path, pv: p.pv }))
+      pcSite.visitors7 = d.totals.v7; pcSite.visitors28 = d.totals.v28
+      pcSite.pv7 = d.totals.pv7; pcSite.pv28 = d.totals.pv28
+      pcSite.src = 'first-party'
+    }
+  }
+
   const out = {
     generated: new Date().toISOString(),
     window: { short: '7d', long: '28d' },
@@ -229,10 +281,12 @@ async function main() {
     totals: {
       pv7: [pcSite, ...live].filter(Boolean).reduce((a, s) => a + s.pv7, 0),
       pv28: [pcSite, ...live].filter(Boolean).reduce((a, s) => a + s.pv28, 0),
+      visitors28: [pcSite, ...live].filter(Boolean).reduce((a, s) => a + (s.visitors28 || 0), 0),
       siteCount: live.length + (pcSite ? 1 : 0)
     },
     purecalculators: {
       site: pcSite,
+      detail: pcDetail,
       apps: appData.filter(a => a.cluster === 'purecalculators')
     },
     sites: live,

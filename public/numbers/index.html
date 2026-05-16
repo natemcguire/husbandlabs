@@ -94,12 +94,20 @@
 <script>
 const $ = s => document.querySelector(s)
 const fmt = n => n == null ? '—' : n.toLocaleString()
-function trend(pv7, pv28){ const r7=pv7/7,r28=pv28/28; if(!r28) return {c:'flat',t:'—'};
-  const d=(r7-r28)/r28; if(d>0.1) return {c:'up',t:'▲ '+Math.round(d*100)+'%'};
-  if(d<-0.1) return {c:'down',t:'▼ '+Math.round(Math.abs(d)*100)+'%'}; return {c:'flat',t:'≈ steady'}; }
+// Trend = recent 7d daily rate vs the 28d daily rate. Only meaningful on real
+// first-party data; CF estimates are too coarse, so suppress it there.
+function trend(s){ if(s.src!=='first-party') return {c:'flat',t:''};
+  const r7=s.pv7/7, r28=s.pv28/28; if(!r28) return {c:'flat',t:''};
+  const d=(r7-r28)/r28; if(d>0.15) return {c:'up',t:'▲ '+Math.round(d*100)+'%'};
+  if(d<-0.15) return {c:'down',t:'▼ '+Math.round(Math.abs(d)*100)+'%'}; return {c:'flat',t:'≈ steady'}; }
+function srcBadge(s){ return s.src==='first-party' ? ''
+  : `<span class="tag" title="Cloudflare estimate — beacon not yet live on this site; numbers are approximate">est.</span>`; }
 function pagesList(host, pages, cls){ return !pages||!pages.length
   ? '<li class="pv" style="color:var(--muted);font-style:italic">no page data</li>'
   : pages.map(p=>`<li><a href="https://${host}${p.path}" target="_blank" rel="noopener">${p.path}</a><span class="pv">${fmt(p.pv)}</span></li>`).join(''); }
+function miniList(items, keyf){ return !items||!items.length
+  ? '<li class="pv" style="color:var(--muted);font-style:italic">—</li>'
+  : items.map(x=>`<li><span>${keyf(x)}</span><span class="pv">${fmt(x.pv)}</span></li>`).join(''); }
 function appCard(a){ const live = a.listed && /live/i.test(a.status||'');
   const counts = (a.installs28!=null)
     ? `<div class="nums"><div><div class="v">${fmt(a.installs7)}</div><div class="k">inst 7d</div></div><div><div class="v">${fmt(a.installs28)}</div><div class="k">inst 28d</div></div></div>`
@@ -108,22 +116,40 @@ function appCard(a){ const live = a.listed && /live/i.test(a.status||'');
     <span class="badge ${live?'live':'dev'}">${a.status}${a.installs28==null?' · installs n/a':''}</span></div>`; }
 
 fetch('./data.json?'+Date.now()).then(r=>r.json()).then(d=>{
-  $('#gen').textContent = 'updated '+new Date(d.generated).toLocaleString()+' · '+d.totals.siteCount+' live sites · '+d.staging.length+' staging';
+  const dq = d.dataQuality==='first-party'
+    ? '<span class="tag" style="background:#16341f;color:#7ee2a8">first-party</span>'
+    : '<span class="tag" title="Cloudflare zone/RUM estimate — first-party beacon collecting; numbers firm up once it has history">Cloudflare est.</span>';
+  $('#gen').innerHTML = 'updated '+new Date(d.generated).toLocaleString()+' · '+d.totals.siteCount+' live sites · '+d.staging.length+' staging · '+dq;
   $('#totals').innerHTML = `
     <div class="tot"><div class="n">${fmt(d.totals.pv7)}</div><div class="l">pageviews · 7d</div></div>
     <div class="tot"><div class="n">${fmt(d.totals.pv28)}</div><div class="l">pageviews · 28d</div></div>
+    <div class="tot"><div class="n">${fmt(d.totals.visitors28)}</div><div class="l">visitors · 28d</div></div>
     <div class="tot"><div class="n">${d.totals.siteCount}</div><div class="l">live sites</div></div>`;
 
   // Featured: PureCalculators
-  const pc = d.purecalculators, s = pc.site;
+  const pc = d.purecalculators, s = pc.site, det = pc.detail;
   if (s) {
-    const t = trend(s.pv7, s.pv28);
+    const t = trend(s);
+    const who = det ? `
+        <div>
+          <p class="colh">Top referrers (28d)</p>
+          <ul class="pages">${miniList(det.topReferrers, x=>x.ref)}</ul>
+        </div>
+        <div>
+          <p class="colh">Countries (28d)</p>
+          <ul class="pages">${miniList(det.topCountries, x=>x.country)}</ul>
+        </div>
+        <div>
+          <p class="colh">Devices (28d)</p>
+          <ul class="pages">${miniList(det.devices, x=>x.device)}</ul>
+        </div>` : '';
     $('#featured').innerHTML = `
-      <div class="ftitle"><a href="https://${s.host}/" target="_blank" rel="noopener">★ PureCalculators</a></div>
+      <div class="ftitle"><a href="https://${s.host}/" target="_blank" rel="noopener">★ PureCalculators</a> ${srcBadge(s)}</div>
       <div class="row">
         <div class="bignums">
           <div><div class="v">${fmt(s.pv7)}</div><div class="k">pv · 7-day</div></div>
           <div><div class="v">${fmt(s.pv28)}</div><div class="k">pv · 28-day</div></div>
+          <div><div class="v">${fmt(s.visitors28)}</div><div class="k">visitors · 28d</div></div>
           <span class="trend ${t.c}">${t.t}</span>
         </div>
       </div>
@@ -132,6 +158,7 @@ fetch('./data.json?'+Date.now()).then(r=>r.json()).then(d=>{
           <p class="colh">Top pages (28d)</p>
           <ul class="pages">${pagesList(s.host, s.topPages)}</ul>
         </div>
+        ${who}
         <div>
           <p class="colh">Companion apps</p>
           ${pc.apps.map(appCard).join('') || '<div class="meta">none</div>'}
@@ -141,12 +168,13 @@ fetch('./data.json?'+Date.now()).then(r=>r.json()).then(d=>{
 
   $('#apps').innerHTML = d.apps.map(appCard).join('') || '<div class="section-label">none</div>';
 
-  $('#sites').innerHTML = d.sites.map(s=>{ const t=trend(s.pv7,s.pv28);
+  $('#sites').innerHTML = d.sites.map(s=>{ const t=trend(s);
     return `<div class="site">
-      <h2><a href="https://${s.host}/" target="_blank" rel="noopener">${s.host}</a></h2>
+      <h2><a href="https://${s.host}/" target="_blank" rel="noopener">${s.host}</a> ${srcBadge(s)}</h2>
       <div class="nums">
-        <div><div class="v">${fmt(s.pv7)}</div><div class="k">7d</div></div>
-        <div><div class="v">${fmt(s.pv28)}</div><div class="k">28d</div></div>
+        <div><div class="v">${fmt(s.pv7)}</div><div class="k">pv 7d</div></div>
+        <div><div class="v">${fmt(s.pv28)}</div><div class="k">pv 28d</div></div>
+        ${s.visitors28!=null?`<div><div class="v">${fmt(s.visitors28)}</div><div class="k">vis 28d</div></div>`:''}
         <span class="trend ${t.c}">${t.t}</span>
       </div>
       <ul class="pages mini">${pagesList(s.host, (s.topPages||[]).slice(0,6))}</ul>

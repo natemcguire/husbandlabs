@@ -262,5 +262,15 @@
     // set year
     document.getElementById('y').textContent = new Date().getFullYear();
   </script>
+  <script data-snippet-id="fp-analytics">
+  (function(){try{
+  if(/^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(location.hostname))return;
+  var h=location.hostname.replace(/^www\./,"");
+  var b=JSON.stringify({s:h,p:location.pathname,r:document.referrer});
+  var u="https://husbandlabs-analytics.nate-mcguire.workers.dev/e";
+  if(navigator.sendBeacon)navigator.sendBeacon(u,b);
+  else fetch(u,{method:"POST",body:b,keepalive:true});
+  }catch(e){}})();
+  </script>
 </body>
 </html>
