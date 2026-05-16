@@ -194,7 +194,7 @@ function ageColor(hours) {
   return 's-bad'
 }
 
-fetch('/numbers/pcdata/status.json').then(r => r.json()).then(s => {
+fetch('./status.json').then(r => r.json()).then(s => {
   setStat('sp-totalCalcs',  s.site.totalUniqueCalcs, 's-info')
   setStat('sp-newCalcs',    s.site.newPipelineCalcs, 's-info')
   setStat('sp-legacyCalcs', s.site.legacyCalcs,      's-info')
@@ -218,14 +218,14 @@ fetch('/numbers/pcdata/status.json').then(r => r.json()).then(s => {
   setStat('sp-generated', new Date(s.generated).toLocaleString(), ageColor(ageHours(s.generated)))
 }).catch(() => { $('#sp-generated').textContent = 'status.json not found — run `node tools/build-dashboard-status.mjs`' })
 
-fetch('/numbers/pcdata/top-earners.json').then(r => r.json()).then(data => {
+fetch('./top-earners.json').then(r => r.json()).then(data => {
   const tbody = document.getElementById('earners-rows')
   const meta = document.getElementById('earners-meta')
   const empty = document.getElementById('earners-empty')
   meta.textContent = `${data.period || ''} · source: ${data.source || 'placeholder'} · ${data.updated ? 'updated ' + new Date(data.updated).toLocaleDateString() : 'no real data yet'}`
 
   // Cross-reference with checklist to flag legacy vs new-pipeline calcs
-  fetch('/numbers/pcdata/checklist.json').then(r => r.json()).then(chk => {
+  fetch('./checklist.json').then(r => r.json()).then(chk => {
     const newSlugs = new Set(chk.map(c => c.slug))
     const allRowsHaveData = data.rows.some(r => r.revenue != null || r.pageviews != null)
     if (!allRowsHaveData) { empty.hidden = false }
@@ -249,7 +249,7 @@ fetch('/numbers/pcdata/top-earners.json').then(r => r.json()).then(data => {
   })
 }).catch(() => { document.getElementById('earners-empty').hidden = false })
 
-fetch('/numbers/pcdata/checklist.json').then(r => r.json()).then(list => {
+fetch('./checklist.json').then(r => r.json()).then(list => {
   const el = $('#checklist')
   const q = $('#checklist-q')
   function render(filter = '') {

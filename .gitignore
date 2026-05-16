@@ -6,3 +6,8 @@ node_modules/
 # generated daily by numbers/refresh.sh
 numbers/public/data.json
 public/numbers/data.json
+
+# pc dashboard JSON mirrored from purecalculators repo by refresh.sh
+public/numbers/pc/status.json
+public/numbers/pc/checklist.json
+public/numbers/pc/top-earners.json
