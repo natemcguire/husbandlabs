@@ -73,6 +73,7 @@
 </header>
 <div class="tabs">
   <div class="tab active" data-tab="overview">Overview</div>
+  <div class="tab" data-tab="purecalc">PureCalc Build</div>
   <div class="tab" data-tab="staging">Staging</div>
 </div>
 
@@ -83,6 +84,16 @@
   <div class="grid" id="apps"></div>
   <div class="section-label">Other sites</div>
   <div class="grid" id="sites"></div>
+</section>
+
+<section class="panel" id="p-purecalc">
+  <div style="padding:10px 24px;color:var(--muted);font-size:12px">
+    Live calc-status dashboard from
+    <a href="https://purecalculators.com/dashboard/" target="_blank" rel="noopener" style="color:var(--accent)">purecalculators.com/dashboard</a>
+    — regenerated on every PureCalculators deploy.
+  </div>
+  <iframe id="pcframe" title="PureCalculators build dashboard" loading="lazy"
+    style="width:100%;height:calc(100vh - 150px);border:0;background:#fff"></iframe>
 </section>
 
 <section class="panel" id="p-staging">
@@ -199,6 +210,7 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
   t.classList.add('active');
   $('#p-'+t.dataset.tab).classList.add('active');
+  if(t.dataset.tab==='purecalc'){const f=$('#pcframe');if(!f.src)f.src='https://purecalculators.com/dashboard/';}
 }));
 </script>
 </body>
