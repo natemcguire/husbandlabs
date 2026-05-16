@@ -37,6 +37,19 @@ function classifyHost(host) {
   return 'live'
 }
 
+// Client projects — this dashboard is personal-only. Any host matching one of
+// these substrings is dropped entirely (totals, sites, staging, top pages).
+const CLIENT_EXCLUDE = [
+  'hellocake',
+  'studio680', 'studio-680',
+  'makingamark', 'making-a-mark',
+  'stevenbrown', 'stevenbrownford', 'brownforaustin'
+]
+function isClientHost(host) {
+  const h = host.toLowerCase()
+  return CLIENT_EXCLUDE.some(s => h.includes(s))
+}
+
 // Curated staging URLs to always list (even with zero analytics traffic), so
 // they're one click away. Add as projects gain staging envs.
 const STAGING_LINKS = [
@@ -174,6 +187,7 @@ async function main() {
     const v28 = pv28[h] || 0
     const v7 = pv7[h] || 0
     if (v28 === 0 && v7 === 0) continue
+    if (isClientHost(h)) continue
     const kind = classifyHost(h)
     if (kind === 'drop') continue
     if (kind === 'staging') { staging.push({ host: h, pv7: v7, pv28: v28 }); continue }
